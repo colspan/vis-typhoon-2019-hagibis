@@ -37,6 +37,12 @@ module.exports = {
       },
     },
   },
+  devServer: {
+    contentBase: path.resolve(__dirname, 'dist'),
+    compress: true,
+    host: '0.0.0.0',
+    disableHostCheck: true,
+  },
   plugins: [
     new HtmlWebpackPlugin({
       template: 'src/index.html'
