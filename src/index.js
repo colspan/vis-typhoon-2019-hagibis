@@ -15,7 +15,7 @@ L.Control.Title = L.Control.extend({
   onAdd: function (map) {
     var div = L.DomUtil.create('div');
     var title = '<h1>2019年 台風19号 各河川水位可視化</h1>';
-    div.className = 'map-title leaflet-bar';
+    div.className = 'map-title';
     div.innerHTML = title;
     return div;
   },
@@ -30,7 +30,7 @@ L.control.title = function (opts) {
 L.Control.Indicator = L.Control.extend({
   onAdd: function (map) {
     var div = L.DomUtil.create('div');
-    div.className = 'map-indicator leaflet-bar';
+    div.className = 'map-indicator';
     return div;
   },
   onRemove: function (map) {
@@ -50,9 +50,12 @@ const map = L.map('map', {
   center: defaultCenter,
   zoomControl: false,
 })
-const basemap = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
-  attribution: 'Tiles &copy; <a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>'
-})
+const attribution = [
+  'Tiles &copy; <a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>',
+  'Data &copy; <a href="http://www1.river.go.jp/">国土交通省 水文水質データベース</a>',
+  'Visualization &copy: <a href="https://github.com/colspan">@colspan</a>'
+].join(' | ')
+const basemap = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', { attribution })
 basemap.addTo(map)
 const titleControl = L.control.title({ position: 'topleft' }).addTo(map)
 L.control.zoom({ position: 'bottomright' }).addTo(map);
@@ -144,14 +147,14 @@ Promise.all([getSiteInfo(), getRiverLog()])
       siteInfoMarkers.forEach((d, i) => {
         let value = riverLog[logIndex][d.site_id]
         const [max, min] = riverSiteMaxMin[i]
-        const color = levelColor[parseInt((value - min) / (max - min) * levelColor.length, 10)]
-        if (!isNaN(value)){
-          d.setRadius((value - min / 2) * 20)
+        const color = levelColor[parseInt((value - min) / (max - min) * (levelColor.length - 1), 10)]
+        if (!isNaN(value)) {
+          d.setRadius((value - min / 2) * 10)
           d.setStyle({
             color,
             fillColor: color,
           })
-        } 
+        }
       })
     }
 

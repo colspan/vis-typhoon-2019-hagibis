@@ -1,19 +1,29 @@
 .map-title {
-    background: white;
+    background-color: rgba(96, 210, 255, 0.2);
+    border-color: rgb(98, 179, 255);
+    border-style: solid;
+    border-width:1px;
     padding: 2px 10px;
-    text-align: top;
-    opacity: 0.8;
+    color: rgb(98, 179, 255);
 }
 .map-title h1 {
+    font-size: 22pt;
     margin: 0;
 }
 
 .map-indicator {
-    background: white;
+    background-color: rgba(96, 210, 255, 0.2);
+    border-color: rgb(98, 179, 255);
+    border-style: solid;
+    border-width:1px;
     padding: 2px 10px;
-    text-align: top;
-    opacity: 0.8;
+    color: rgb(98, 179, 255);
+    padding: 2px 10px;
 }
 .map-indicator .datetime {
-    font-size: 16pt;
+    font-size: 24pt;
+}
+
+.leaflet-tile-container img {
+    filter: invert(100%) hue-rotate(180deg);
 }
