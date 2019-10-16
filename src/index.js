@@ -14,7 +14,7 @@ L.Control.Title = L.Control.extend({
   onAdd: function (map) {
     var div = L.DomUtil.create('div');
     var title = '<h1>2019年 台風19号 各河川水位可視化</h1>';
-    div.className = 'title-header leaflet-bar';
+    div.className = 'map-title leaflet-bar';
     div.innerHTML = title;
     return div;
   },
@@ -25,6 +25,21 @@ L.Control.Title = L.Control.extend({
 L.control.title = function (opts) {
   return new L.Control.Title(opts);
 }
+
+L.Control.Indicator = L.Control.extend({
+  onAdd: function (map) {
+    var div = L.DomUtil.create('div');
+    div.className = 'map-indicator leaflet-bar';
+    return div;
+  },
+  onRemove: function (map) {
+    // Nothing to do here
+  }
+});
+L.control.indicator = function (opts) {
+  return new L.Control.Indicator(opts);
+}
+
 
 
 const defaultCenter = [35.758771, 139.794158]
@@ -104,6 +119,9 @@ Promise.all([getSiteInfo(), getRiverLog()])
       return [max, min]
     })
 
+    // state variables
+    let logIndex = 0
+
     // markers
     const siteInfoMarkers = riverSiteInfo.map(d => {
       const marker = L.circleMarker(d.coordinate).addTo(map)
@@ -113,7 +131,6 @@ Promise.all([getSiteInfo(), getRiverLog()])
       return marker
     })
     // update markers
-    let logIndex = 0
     function updateMarkers() {
       siteInfoMarkers.forEach((d, i) => {
         let value = riverLog[logIndex][d.site_id]
@@ -123,8 +140,11 @@ Promise.all([getSiteInfo(), getRiverLog()])
     }
 
     // datetime
+    const mapIndicator = L.control.indicator({ position: 'bottomleft' })
+    const mapIndicatorContainer = mapIndicator.addTo(map)
     function updateDateTime() {
-      console.log(riverLog[logIndex].datetime)
+      const indicatorHtml = `<div class="datetime">${riverLog[logIndex].datetime}</div>`
+      mapIndicatorContainer.getContainer().innerHTML = indicatorHtml
     }
 
     // start animation

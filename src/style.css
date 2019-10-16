@@ -1,10 +1,19 @@
-.title-header {
+.map-title {
     background: white;
     padding: 2px 10px;
     text-align: top;
     opacity: 0.8;
 }
-.title-header h1 {
+.map-title h1 {
     margin: 0;
 }
 
+.map-indicator {
+    background: white;
+    padding: 2px 10px;
+    text-align: top;
+    opacity: 0.8;
+}
+.map-indicator .datetime {
+    font-size: 16pt;
+}
