@@ -1,6 +1,7 @@
 import neatCsv from 'neat-csv'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import './style.css'
 
 /* NOTE: This code is needed to properly load the images in the Leaflet CSS */
 delete L.Icon.Default.prototype._getIconUrl
@@ -9,16 +10,37 @@ L.Icon.Default.mergeOptions({
   iconUrl: require('leaflet/dist/images/marker-icon.png'),
   shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
 })
+L.Control.Title = L.Control.extend({
+  onAdd: function (map) {
+    var div = L.DomUtil.create('div');
+    var title = '<h1>2019年 台風19号 各河川水位可視化</h1>';
+    div.className = 'title-header leaflet-bar';
+    div.innerHTML = title;
+    return div;
+  },
+  onRemove: function (map) {
+    // Nothing to do here
+  }
+});
+L.control.title = function (opts) {
+  return new L.Control.Title(opts);
+}
 
-const map = L.map('map')
+
 const defaultCenter = [35.758771, 139.794158]
 const defaultZoom = 11
-const basemap = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
-  attribution: 'Tiles &copy <a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>'
+const map = L.map('map', {
+  zoom: defaultZoom,
+  center: defaultCenter,
+  zoomControl: false,
 })
-
-map.setView(defaultCenter, defaultZoom)
+const basemap = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
+  attribution: 'Tiles &copy; <a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>'
+})
 basemap.addTo(map)
+const titleControl = L.control.title({ position: 'topleft' }).addTo(map)
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
 
 function getSiteInfo() {
   const siteInfoCSV = './siteinfo.csv'
@@ -82,7 +104,7 @@ Promise.all([getSiteInfo(), getRiverLog()])
       return [max, min]
     })
 
-    // add markers
+    // markers
     const siteInfoMarkers = riverSiteInfo.map(d => {
       const marker = L.circleMarker(d.coordinate).addTo(map)
       const text = `${d.site_name}`
@@ -90,7 +112,6 @@ Promise.all([getSiteInfo(), getRiverLog()])
       marker.site_id = d.site_id
       return marker
     })
-
     // update markers
     let logIndex = 0
     function updateMarkers() {
@@ -101,7 +122,8 @@ Promise.all([getSiteInfo(), getRiverLog()])
       })
     }
 
-    function updateTitle() {
+    // datetime
+    function updateDateTime() {
       console.log(riverLog[logIndex].datetime)
     }
 
@@ -111,7 +133,7 @@ Promise.all([getSiteInfo(), getRiverLog()])
       logIndex += 1
       if (riverLog.length <= logIndex) logIndex = 0
       updateMarkers()
-      updateTitle()
+      updateDateTime()
     }, 100)
 
   })
