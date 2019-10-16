@@ -1,3 +1,4 @@
+import colormap from 'colormap'
 import neatCsv from 'neat-csv'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -121,10 +122,18 @@ Promise.all([getSiteInfo(), getRiverLog()])
 
     // state variables
     let logIndex = 0
+    const levelColor = colormap({
+      colormap: 'portland',
+      nshades: 30,
+      format: 'hex',
+      alpha: 1,
+    })
 
     // markers
     const siteInfoMarkers = riverSiteInfo.map(d => {
-      const marker = L.circleMarker(d.coordinate).addTo(map)
+      const marker = L.circleMarker(d.coordinate, {
+        weight: 1,
+      }).addTo(map)
       const text = `${d.site_name}`
       marker.bindTooltip(text)
       marker.site_id = d.site_id
@@ -135,7 +144,14 @@ Promise.all([getSiteInfo(), getRiverLog()])
       siteInfoMarkers.forEach((d, i) => {
         let value = riverLog[logIndex][d.site_id]
         const [max, min] = riverSiteMaxMin[i]
-        if (!isNaN(value)) d.setRadius((value - min / 2) * 20)
+        const color = levelColor[parseInt((value - min) / (max - min) * levelColor.length, 10)]
+        if (!isNaN(value)){
+          d.setRadius((value - min / 2) * 20)
+          d.setStyle({
+            color,
+            fillColor: color,
+          })
+        } 
       })
     }
 

@@ -10,6 +10,7 @@
   "author": "Kunihiko Miyoshi",
   "license": "MIT",
   "dependencies": {
+    "colormap": "^2.3.1",
     "leaflet": "^1.4.0",
     "neat-csv": "^5.1.0"
   },
