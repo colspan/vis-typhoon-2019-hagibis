@@ -52,8 +52,9 @@ const map = L.map('map', {
 })
 const attribution = [
   'Tiles &copy; <a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a>',
-  'Data &copy; <a href="http://www1.river.go.jp/">国土交通省 水文水質データベース</a>',
-  'Visualization &copy: <a href="https://github.com/colspan">@colspan</a>'
+  'River log &copy; <a href="http://www1.river.go.jp/">国土交通省 水文水質データベース</a>',
+  'Visualization &copy; <a href="https://github.com/colspan">@colspan</a>',
+  'Typhoon Track Log &copy; <a href="http://agora.ex.nii.ac.jp/digital-typhoon/summary/wnp/s/201919.html.ja">国立情報学研究所「デジタル台風」</a>'
 ].join(' | ')
 const basemap = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', { attribution })
 basemap.addTo(map)
@@ -104,10 +105,33 @@ function getRiverLog() {
   })
 }
 
-Promise.all([getSiteInfo(), getRiverLog()])
+function getTyphoonTrackLog() {
+  // http://agora.ex.nii.ac.jp/digital-typhoon/summary/wnp/s/201919.html.ja
+  const typhoonTrackJson = './201919.ja.json'
+  return new Promise((resolve, reject) => {
+    fetch(typhoonTrackJson)
+      .then(res => res.json())
+      .then(data => {
+        const log = data.features.map(d => {
+          const time = d.properties.time
+          const coordinates = d.geometry.coordinates
+          return { [time]: [coordinates[1], coordinates[0]] }
+        })
+          .reduce((l, r) => Object.assign(l, r), {})
+        resolve(log)
+      })
+      .catch(reject)
+  })
+}
+
+Promise.all([
+  getSiteInfo(),
+  getRiverLog(),
+  getTyphoonTrackLog(),
+])
   .then(result => {
-    const [siteInfo, riverLog] = result
-    console.log(siteInfo, riverLog)
+    const [siteInfo, riverLog, typhoonTrackLog] = result
+    // console.log(siteInfo, riverLog)
 
     const riverSiteInfo = siteInfo.filter(d => d.site_id.length === 16)
     const damSiteInfo = siteInfo.filter(d => d.site_id.length < 16)
@@ -149,11 +173,13 @@ Promise.all([getSiteInfo(), getRiverLog()])
         const [max, min] = riverSiteMaxMin[i]
         const color = levelColor[parseInt((value - min) / (max - min) * (levelColor.length - 1), 10)]
         if (!isNaN(value)) {
-          d.setRadius((value - min / 2) * 10)
+          d.setRadius((value - min) * 10 + 5)
           d.setStyle({
             color,
             fillColor: color,
           })
+        } else {
+          d.setRadius(1)
         }
       })
     }
@@ -166,17 +192,41 @@ Promise.all([getSiteInfo(), getRiverLog()])
       mapIndicatorContainer.getContainer().innerHTML = indicatorHtml
     }
 
+    // typhoon track
+    const typhoonTrackTimes = Object.keys(typhoonTrackLog).map(d => +d)
+    const typhoonTrackPositions = Object.values(typhoonTrackLog)
+    const typhoonTrackPath = L.polyline(typhoonTrackPositions, { color: 'yellow', weight: 1 })
+    typhoonTrackPath.addTo(map)
+    const typhoonPosMarker = L.marker(typhoonTrackPositions[0])
+    typhoonPosMarker.addTo(map)
+    function updateTyphoon() {
+      const currentTime = Date.parse(riverLog[logIndex].datetime) / 1000
+      const targetIndex = typhoonTrackTimes.reduce((pre, current, i) => current <= currentTime ? i : pre, 0)
+      let currentPos
+      if (targetIndex === 0 || targetIndex === typhoonTrackPositions.length - 1) {
+        currentPos = typhoonTrackPositions[targetIndex]
+      } else {
+        const lastPos = typhoonTrackPositions[targetIndex]
+        const nextPos = typhoonTrackPositions[targetIndex + 1]
+        const linearInterpolation = (x, y, i, x_d) => {
+          return (y[i + 1] - y[i]) / (x[i + 1] - x[i]) * (x_d - x[i]) + y[i]
+        }
+        currentPos = [
+          linearInterpolation(typhoonTrackTimes, typhoonTrackPositions.map(d => d[0]), targetIndex, currentTime),
+          linearInterpolation(typhoonTrackTimes, typhoonTrackPositions.map(d => d[1]), targetIndex, currentTime)
+        ]
+      }
+      typhoonPosMarker.setLatLng(currentPos)
+    }
+
     // start animation
-    // updateMarkers()
     setInterval(() => {
       logIndex += 1
       if (riverLog.length <= logIndex) logIndex = 0
       updateMarkers()
       updateDateTime()
+      updateTyphoon()
     }, 100)
 
   })
   .catch(console.error)
-
-// const marker = L.marker(defaultCenter)
-// marker.addTo(map)
