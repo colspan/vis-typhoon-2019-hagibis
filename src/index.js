@@ -1,47 +1,14 @@
 import colormap from 'colormap'
-import neatCsv from 'neat-csv'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+
+import './leafletHelper'
+import {
+  getRiverLog,
+  getSiteInfo,
+  getTyphoonTrackLog,
+} from './data'
 import './style.css'
-
-/* NOTE: This code is needed to properly load the images in the Leaflet CSS */
-delete L.Icon.Default.prototype._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-})
-L.Control.Title = L.Control.extend({
-  onAdd: function (map) {
-    var div = L.DomUtil.create('div');
-    var title = '<h1>2019年 台風19号 各河川水位可視化</h1>';
-    div.className = 'map-title';
-    div.innerHTML = title;
-    return div;
-  },
-  onRemove: function (map) {
-    // Nothing to do here
-  }
-});
-L.control.title = function (opts) {
-  return new L.Control.Title(opts);
-}
-
-L.Control.Indicator = L.Control.extend({
-  onAdd: function (map) {
-    var div = L.DomUtil.create('div');
-    div.className = 'map-indicator';
-    return div;
-  },
-  onRemove: function (map) {
-    // Nothing to do here
-  }
-});
-L.control.indicator = function (opts) {
-  return new L.Control.Indicator(opts);
-}
-
-
 
 const defaultCenter = [35.758771, 139.794158]
 const defaultZoom = 11
@@ -58,71 +25,8 @@ const attribution = [
 ].join(' | ')
 const basemap = L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', { attribution })
 basemap.addTo(map)
-const titleControl = L.control.title({ position: 'topleft' }).addTo(map)
+const titleControl = L.control.title({ title: '2019年 台風19号 各河川水位可視化', position: 'topleft' }).addTo(map)
 L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-
-function getSiteInfo() {
-  const siteInfoCSV = './siteinfo.csv'
-  return new Promise((resolve, reject) => {
-    fetch(siteInfoCSV)
-      .then(res => res.text())
-      .then(data => neatCsv(data, {
-        mapValues: ({ header, index, value }) => {
-          if (header === 'coordinate') {
-            function parseLonLat(x) {
-              const reg = new RegExp("[度分秒]")
-              const values = x.split(reg)
-              return +values[0] + (+values[1]) / 60 + (+values[2]) / 60 / 60
-            }
-            const splitValue = value.split(" ")
-            const lat = parseLonLat(splitValue[1])
-            const lon = parseLonLat(splitValue[3])
-            return [lat, lon]
-          }
-          else return value
-        }
-      }))
-      .then(resolve)
-      .catch(reject)
-  })
-}
-
-function getRiverLog() {
-  const siteInfoCSV = './riverlog_201910.csv'
-  return new Promise((resolve, reject) => {
-    fetch(siteInfoCSV)
-      .then(res => res.text())
-      .then(data => neatCsv(data, {
-        mapValues: ({ header, index, value }) => {
-          if (header === 'datetime') return value
-          else if (value === "") return NaN
-          else return +value
-        }
-      }))
-      .then(resolve)
-      .catch(reject)
-  })
-}
-
-function getTyphoonTrackLog() {
-  // http://agora.ex.nii.ac.jp/digital-typhoon/summary/wnp/s/201919.html.ja
-  const typhoonTrackJson = './201919.ja.json'
-  return new Promise((resolve, reject) => {
-    fetch(typhoonTrackJson)
-      .then(res => res.json())
-      .then(data => {
-        const log = data.features.map(d => {
-          const time = d.properties.time
-          const coordinates = d.geometry.coordinates
-          return { [time]: [coordinates[1], coordinates[0]] }
-        })
-          .reduce((l, r) => Object.assign(l, r), {})
-        resolve(log)
-      })
-      .catch(reject)
-  })
-}
 
 Promise.all([
   getSiteInfo(),
@@ -134,7 +38,7 @@ Promise.all([
     // console.log(siteInfo, riverLog)
 
     const riverSiteInfo = siteInfo.filter(d => d.site_id.length === 16)
-    const damSiteInfo = siteInfo.filter(d => d.site_id.length < 16)
+    // const damSiteInfo = siteInfo.filter(d => d.site_id.length < 16)
 
     // calc max, min
     const riverSiteMaxMin = riverSiteInfo.map(d => {
