@@ -7,7 +7,7 @@
     color: rgb(98, 179, 255);
 }
 .map-title h1 {
-    font-size: 22pt;
+    font-size: 48pt;
     margin: 0;
 }
 
@@ -17,11 +17,11 @@
     border-style: solid;
     border-width:1px;
     padding: 2px 10px;
-    color: rgb(98, 179, 255);
+    color: white;
     padding: 2px 10px;
 }
 .map-indicator .datetime {
-    font-size: 24pt;
+    font-size: 42pt;
 }
 
 .leaflet-tile-container img {
