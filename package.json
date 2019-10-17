@@ -1,7 +1,11 @@
 {
-  "name": "typhoon-2019-mabilis",
+  "name": "typhoon-2019-hagibis",
   "version": "0.0.0",
-  "description": "Data visualization for typhoon 2019 Mabilis",
+  "description": "Data Visualization for Typhoon 2019 Hagibis",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:colspan/vis-typhoon-2019-hagibis.git"
+  },
   "main": "index.js",
   "scripts": {
     "build": "webpack",

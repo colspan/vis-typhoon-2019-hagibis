@@ -1,4 +1,4 @@
-# Visualizaton Typhoon 2019 Hagibis
+# Data Visualizaton for Typhoon 2019 Hagibis
 
 ## References
 - Tiles &copy; [国土地理院](https://maps.gsi.go.jp/development/ichiran.html)
