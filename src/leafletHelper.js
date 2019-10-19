@@ -22,16 +22,16 @@ L.control.title = function (opts) {
   return new L.Control.Title(opts)
 }
 
-L.Control.Indicator = L.Control.extend({
+L.Control.EmptyDiv = L.Control.extend({
   onAdd: function (map) {
     const div = L.DomUtil.create('div')
-    div.className = 'map-indicator'
+    div.className = this.options.className;
     return div
   },
   onRemove: function (map) {
     // Nothing to do here
   }
 })
-L.control.indicator = function (opts) {
-  return new L.Control.Indicator(opts)
+L.control.emptyDiv = function (opts) {
+  return new L.Control.EmptyDiv(opts)
 }

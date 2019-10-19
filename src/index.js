@@ -9,6 +9,7 @@ import {
   getTyphoonTrackLog,
 } from './data'
 import './style.css'
+import { isUndefined } from 'util'
 
 const defaultCenter = [35.758771, 139.794158]
 const defaultZoom = 11
@@ -88,14 +89,6 @@ Promise.all([
       })
     }
 
-    // datetime
-    const mapIndicator = L.control.indicator({ position: 'bottomleft' })
-    const mapIndicatorContainer = mapIndicator.addTo(map)
-    function updateDateTime() {
-      const indicatorHtml = `<div class="datetime">${riverLog[logIndex].datetime}</div>`
-      mapIndicatorContainer.getContainer().innerHTML = indicatorHtml
-    }
-
     // typhoon track
     const typhoonTrackTimes = Object.keys(typhoonTrackLog).map(d => +d)
     const typhoonTrackPositions = Object.values(typhoonTrackLog)
@@ -103,7 +96,7 @@ Promise.all([
     typhoonTrackPath.addTo(map)
     const typhoonPosMarker = L.marker(typhoonTrackPositions[0])
     typhoonPosMarker.addTo(map)
-    function updateTyphoon() {
+    function updateTyphoonTrack() {
       const currentTime = Date.parse(riverLog[logIndex].datetime) / 1000
       const targetIndex = typhoonTrackTimes.reduce((pre, current, i) => current <= currentTime ? i : pre, 0)
       let currentPos
@@ -123,14 +116,52 @@ Promise.all([
       typhoonPosMarker.setLatLng(currentPos)
     }
 
+    // indicator
+    const mapIndicator = L.control.emptyDiv({ position: 'bottomleft', className: 'map-indicator' })
+    const mapIndicatorContainer = mapIndicator.addTo(map)
+    /// current time indicator
+    const currentTimeContainer = document.createElement('div')
+    currentTimeContainer.className = 'datetime'
+    mapIndicatorContainer.getContainer().appendChild(currentTimeContainer)
+    const timeSliderContainer = document.createElement('input')
+    /// time slider
+    timeSliderContainer.className = 'selector'
+    timeSliderContainer.type = 'range'
+    timeSliderContainer.min = 0
+    timeSliderContainer.max = riverLog.length - 1
+    mapIndicatorContainer.getContainer().appendChild(timeSliderContainer)
+    function updateIndicator() {
+      currentTimeContainer.innerHTML = riverLog[logIndex].datetime
+      mapIndicatorContainer.value = logIndex
+      timeSliderContainer.value = logIndex
+    }
+
     // start animation
-    setInterval(() => {
-      logIndex += 1
-      if (riverLog.length <= logIndex) logIndex = 0
+    const updateInterval = 100
+    let animIntervalObj
+    const updateIndex = (newIndex) => {
+      if (isUndefined(newIndex)) {
+        logIndex += 1
+      }
+      else {
+        logIndex = newIndex
+      }
+      if (riverLog.length <= logIndex || logIndex < 0) logIndex = 0
       updateMarkers()
-      updateDateTime()
-      updateTyphoon()
-    }, 100)
+      updateIndicator()
+      updateTyphoonTrack()
+    }
+    timeSliderContainer.addEventListener('input', (e) => {
+      clearInterval(animIntervalObj)
+      map.dragging.disable();
+      logIndex = +e.target.value
+      updateIndex(logIndex)
+    })
+    timeSliderContainer.addEventListener('change', () => {
+      animIntervalObj = setInterval(updateIndex, updateInterval)
+      map.dragging.enable();
+    })
+    animIntervalObj = setInterval(updateIndex, updateInterval)
 
   })
   .catch(console.error)
